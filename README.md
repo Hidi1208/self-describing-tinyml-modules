@@ -1,5 +1,7 @@
 # SDHM Demo — Step by Step
 
+![Hardware Setup](images/sdhm-hardware.jpeg)
+
 ## Wiring
 ESP32 GPIO21 (SDA) ──┬── EEPROM pin 5 ──┬── MPU6050 SDA
 ESP32 GPIO22 (SCL) ──┬── EEPROM pin 6 ──┬── MPU6050 SCL
@@ -23,6 +25,9 @@ cd ../universal_interpreter
 pio run -t upload
 pio device monitor
 ```
+![Close-up](images/sdhm-closeup.jpeg)
+
+![Terminal Output](images/sdhm-terminal.jpeg)
 
 ## What you'll see
 1. "Scanning for module EEPROM... FOUND"
