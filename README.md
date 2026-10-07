@@ -1,6 +1,6 @@
 # SDHM — Self-Describing Hot-Swappable TinyML Sensor Modules
 
-A plug-and-play edge AI platform where sensor modules carry their own trained neural network weights and a machine-readable descriptor in onboard EEPROM. A base station (ESP32) reads the descriptor on plug-in, dynamically loads the model, configures the sensor, and begins inference — no reflashing, no recompilation, no OTA updates.
+A plug-and-play edge AI platform where sensor modules carry their own trained neural network weights and a machine-readable descriptor in onboard EEPROM. A base station (ESP32) reads the descriptor on plug-in, dynamically loads the model, configures the sensor, and begins inference.
 
 ## Why This Exists
 
