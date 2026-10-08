@@ -34,13 +34,16 @@ I2C at 100 kHz using the ESP32's internal pull-ups (4.7 kΩ external pull-ups to
 ## Repo Structure
 
 ```
-sdhm-tinyml/
+self-describing-tinyml-modules/
 ├── firmware/
-│   ├── eeprom_writer/          # PlatformIO — flashes descriptor + weights to 24LC512
-│   └── universal_interpreter/  # PlatformIO — reads EEPROM, runs live inference
+│   ├── eeprom_writer/          # Arduino IDE — writes a 64 KB image to the 24LC512
+│   └── universal_interpreter/  # Arduino IDE — reads the module EEPROM, runs inference, detects hot swaps
 ├── tools/
-│   └── flash_eeprom.py         # Serial handshake script for page-by-page EEPROM write
-├── eeprom_image.bin            # Pre-built 64KB EEPROM image (gesture model)
+│   ├── flash_eeprom.py         # Sends an image to eeprom_writer page by page
+│   └── make_pir_image.py       # Builds pir_eeprom_image.bin from the trained PIR model
+├── eeprom_image.bin            # 64 KB EEPROM image — MPU6050 gesture module
+├── pir_eeprom_image.bin        # 64 KB EEPROM image — HC-SR501 PIR presence module
+├── PIR_MODULE_GUIDE.md         # PIR module + hot-swap demo
 └── README.md
 ```
 ## Running the Demo
@@ -64,12 +67,12 @@ See [PIR_MODULE_GUIDE.md](PIR_MODULE_GUIDE.md) for the PIR module and the hot-sw
 
 ## How It Works
 
-1. On boot, the interpreter scans I2C for a 24LC512 EEPROM
-2. Reads the 512-byte descriptor — validates magic bytes and CRC-32
-3. Parses model architecture: layer count, types (Conv1D/MaxPool1D/Dense), dimensions, activations
-4. Loads INT8 weights from EEPROM into RAM
-5. Initializes the sensor (MPU6050) using config from the descriptor
-6. Runs inference in a loop — sliding window over accelerometer/gyroscope samples, forward pass through the parsed architecture, softmax output to serial dashboard
+1. The interpreter polls I2C for a 24LC512 EEPROM and reloads automatically when a module is removed or swapped
+2. Reads the 512-byte descriptor — validates the magic bytes and checks the header fields are in range
+3. Parses the model architecture: layer count, types (Conv1D/MaxPool1D/Dense/Flatten), dimensions, activations
+4. Loads float32 weights from EEPROM into RAM
+5. Initializes the sensor named in the descriptor: MPU6050 over I2C, or the HC-SR501 PIR on GPIO 34
+6. Captures a window of samples, runs the forward pass, and prints the softmax output, inference time and swap timing
 
 The inference engine is a from-scratch C++ implementation — no TFLite Micro, no CMSIS-NN, no external ML framework. It interprets arbitrary layer graphs described by the binary descriptor.
 
