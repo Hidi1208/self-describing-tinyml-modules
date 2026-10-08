@@ -12,7 +12,7 @@ Every existing edge ML workflow hardcodes the model into firmware. Swap the sens
 |--------|-------|
 | Descriptor size | 512 bytes |
 | Model architecture | Conv1D → MaxPool1D → Dense → Dense → Softmax (7 layers) |
-| Weight size | 57,296 bytes (INT8 quantized) |
+| Weight size | 57,296 bytes (float32) |
 | Gesture classes | idle, shake_x, flick_up, twist |
 | Test accuracy | 99.2% |
 | Inference target | ESP32 (no PSRAM required) |
@@ -28,7 +28,7 @@ ESP32 3.3V ──────────┬── 24LC512 pin 8 ──┬──
 ESP32 GND ───────────┬── 24LC512 pin 4 ──┬── MPU6050 GND
                       24LC512 pins 1,2,3,7 → GND
 
-4.7kΩ pull-ups on SDA and SCL to 3.3V.
+I2C at 100 kHz using the ESP32's internal pull-ups (4.7 kΩ external pull-ups to 3.3 V recommended for 400 kHz).
 ```
 
 ## Repo Structure
@@ -43,38 +43,24 @@ sdhm-tinyml/
 ├── eeprom_image.bin            # Pre-built 64KB EEPROM image (gesture model)
 └── README.md
 ```
-
 ## Running the Demo
 
-**Step 1 — Flash the EEPROM (one time):**
+**Step 1 — Flash the EEPROM (one time per module):**
 
+1. Arduino IDE: open `firmware/eeprom_writer/eeprom_writer.ino`, board **ESP32 Dev Module**, upload, then close the Serial Monitor.
+2. Run:
 ```bash
-cd firmware/eeprom_writer
-pio run -t upload
-pip install pyserial
-python3 ../../tools/flash_eeprom.py /dev/ttyUSB0 ../../eeprom_image.bin
+   pip install pyserial
+   python tools/flash_eeprom.py COM8 eeprom_image.bin        # gesture module
+   python tools/flash_eeprom.py COM8 pir_eeprom_image.bin    # PIR module
 ```
+   Wait for `DONE` and `MAGIC: OK`.
 
-Wait for `DONE errors=0`.
+**Step 2 — Run the interpreter:**
 
-**Step 2 — Upload the interpreter and run:**
+Arduino IDE: open `firmware/universal_interpreter/universal_interpreter.ino`, upload, and open the Serial Monitor at 115200. Plug in a module; swap modules while it runs.
 
-```bash
-cd ../universal_interpreter
-pio run -t upload
-pio device monitor
-```
-
-![Close-up](images/sdhm-closeup.jpeg)
-
-![Terminal Output](images/sdhm-terminal.jpeg)
-
-**What you'll see:**
-
-1. `Scanning for module EEPROM... FOUND`
-2. Full model architecture printout (layer types, dimensions, activations, class labels)
-3. `Loading weights: 57296 bytes...`
-4. Live gesture classification dashboard with confidence bars
+See [PIR_MODULE_GUIDE.md](PIR_MODULE_GUIDE.md) for the PIR module and the hot-swap demo.
 
 ## How It Works
 
